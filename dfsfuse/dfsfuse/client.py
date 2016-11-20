@@ -1,5 +1,6 @@
 from logging import getLogger
 import os
+import collections
 import hashlib
 import socket
 import json
@@ -18,6 +19,7 @@ class Client():
     self._connect()
     self._init()
 
+
   def login(self):
     logger.info('Send login')
     _, body = self.request('auth#login', header = { 'psk': self._psk  })
@@ -32,6 +34,31 @@ class Client():
     if body != 'ping':
       logger.error('Ping fail')
       raise RuntimeError('Ping: unexpected response')
+
+  def has(self, path):
+    deque = collections.deque()
+    cur_path = path
+
+    while True:
+      (head, tail) = os.path.split(cur_path)
+      if tail:
+        deque.appendleft(tail)
+      if head == '/':
+        deque.appendleft(head)
+        break
+      cur_path = head
+
+    cur_path = deque.popleft()
+    while len(deque) > 0:
+      parent_path = cur_path
+      logger.info('has: Recursive find file: cur_path: %s', cur_path)
+      cur_path = os.path.join(cur_path, deque.popleft())
+      if not self._fs.has(cur_path):
+        if self._fs.isdir(parent_path):
+          self.readdir(parent_path)
+        else:
+          break
+    return self._fs.has(path)
 
   def write(self, path, content):
     parent_path = os.path.dirname(path)
