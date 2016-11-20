@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
+import errno
 from logging import getLogger
 from fuse import Operations, LoggingMixIn
 
@@ -12,8 +13,9 @@ class DFSFuse(LoggingMixIn, Operations):
 
   def access(self, path, mode):
     logger.info('access path: %s, mode: %s', path, mode)
-    return 0
-    raise NotImplementedError()
+    if self._client.has(path):
+      return 0
+    return errno.ENOENT
 
   def chmod(self, path, mode):
     return 0 # Not support
@@ -29,7 +31,9 @@ class DFSFuse(LoggingMixIn, Operations):
                                                     'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
 
   def readdir(self, path, fh):
-    raise NotImplementedError()
+    dirents = self._client.readdir(path)
+    for ent in dirents:
+      yield ent
     # full_path = self._full_path(path)
     #
     # dirents = ['.', '..']
