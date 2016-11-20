@@ -89,7 +89,8 @@ class Client():
     _, body = self.request('dir#rm', header = { 'id': id })
     if body != 'OK':
       raise RuntimeError('Rmdir fail')
-    return self.readdir(path)
+    self.readdir(path)
+    return True
 
   def request(self, request, body = b'', header = {}):
     controller, action = request.split('#')
