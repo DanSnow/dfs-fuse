@@ -9,7 +9,8 @@ logger = getLogger('Packet')
 
 class Packet:
   def __init__(self, header = {}, body = ""):
-    self.header = header
+    self.header = {}
+    self.header.update(header)
     self.set(body)
 
   def set(self, header, value = None):
