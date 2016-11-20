@@ -1,4 +1,5 @@
 from logging import getLogger
+import os
 import hashlib
 import socket
 import json
@@ -32,10 +33,40 @@ class Client():
       logger.error('Ping fail')
       raise RuntimeError('Ping: unexpected response')
 
-  def readdir(self, path, force = False):
-    if not force and self._fs.hasdir(path):
-      return self._fs.readdir(path)
+  def write(self, path, content):
+    parent_path = os.path.dirname(path)
+    if not self._fs.isdir(parent_path):
+      raise RuntimeError('Write: path is not dir')
 
+    name = os.path.basename(path)
+    id = self._fs.getid(parent_path)
+    _, body = self.request('file#put', header = { 'id': id, 'name': name }, body = content)
+    if body != 'OK':
+      raise RuntimeError('Write fail')
+    self.readdir(parent_path)
+    return True
+
+  def read(self, path):
+    if not self._fs.isfile(path):
+      return None
+    id = self._fs.getid(path)
+    header, body = self.request('file#get', header = { 'id': id })
+    if header['result'] != 'OK':
+      raise RuntimeError('Read fail')
+    return body
+
+  def rm(self, path):
+    if not self._fs.isfile(path):
+      return False
+    parent_path = os.path.dirname(path)
+    id = self._fs.getid(path)
+    header, body = self.request('file#rm', header = { 'id': id })
+    if body != 'OK':
+      raise RuntimeError('Rm fail')
+    self.readdir(parent_path)
+    return True
+
+  def readdir(self, path):
     id = self._fs.getid(path)
     data = self._readdir(id)
     self._fs.adddir(path, data)
@@ -51,14 +82,14 @@ class Client():
     _, body = self.request('dir#add', header = { 'id': parent_id, 'name': name })
     if body != 'OK':
       raise RuntimeError('Mkdir fail')
-    return self.readdir(path, force = True)
+    return self.readdir(path)
 
   def rmdir(self, path):
     id = self._fs.getid(path)
     _, body = self.request('dir#rm', header = { 'id': id })
     if body != 'OK':
       raise RuntimeError('Rmdir fail')
-    return self.readdir(path, force = True)
+    return self.readdir(path)
 
   def request(self, request, body = b'', header = {}):
     controller, action = request.split('#')
