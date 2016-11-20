@@ -1,4 +1,5 @@
 import os
+from .utils.leftpad import leftpad
 
 class MemoryFS:
   def __init__(self):
@@ -12,6 +13,15 @@ class MemoryFS:
     if path in self._meta:
       return True
     return False
+
+  def tree(self, root = '/'):
+    indent = 0
+    if root != '/':
+      indent = (len(root.split('/')) - 1) * 2
+    for child in self._meta[root]['children']:
+      print(leftpad(child, width = indent))
+      if self.isdir(child):
+        self.tree(child)
 
   def readdir(self, path):
     if path not in self._meta:
@@ -37,6 +47,7 @@ class MemoryFS:
       child_path = os.path.join(path, name)
       self._paths[child_path] = meta
       self._meta[path]['children'].add(child_path)
+      self._meta[child_path] = meta
 
   def getid(self, path):
     return self._paths[path]['id']
