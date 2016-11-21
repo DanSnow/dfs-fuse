@@ -41,10 +41,15 @@ class DFSFuse(LoggingMixIn, Operations):
       'st_size': 1
     }
 
+  def getxattr(self, path, name, position = 0):
+    return ''
+
+  def listxattr(self, path):
+    return []
+
   def readdir(self, path, fh):
     dirents = self._client.readdir(path)
-    for ent in dirents:
-      yield ent
+    return dirents.keys()
     # full_path = self._full_path(path)
     #
     # dirents = ['.', '..']
@@ -70,12 +75,11 @@ class DFSFuse(LoggingMixIn, Operations):
     return os.mkdir(self._full_path(path), mode)
 
   def statfs(self, path):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    stv = os.statvfs(full_path)
-    return dict((key, getattr(stv, key)) for key in ('f_bavail', 'f_bfree',
-                                                     'f_blocks', 'f_bsize', 'f_favail', 'f_ffree', 'f_files', 'f_flag',
-                                                     'f_frsize', 'f_namemax'))
+    return {
+      'f_bsize': 512,
+      'f_blocks': 4096,
+      'f_bavail': 2048
+    }
 
   def unlink(self, path):
     raise NotImplementedError()
