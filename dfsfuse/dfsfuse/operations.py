@@ -71,20 +71,9 @@ class DFSFuse(LoggingMixIn, Operations):
     dirents = self._client.readdir(path).keys()
     logger.info('readdir: dirents: %s', dirents)
     return dirents
-    # full_path = self._full_path(path)
-    #
-    # dirents = ['.', '..']
-    # if os.path.isdir(full_path):
-    #   dirents.extend(os.listdir(full_path))
-    #   for r in dirents:
-    #     yield r
 
   def readlink(self, path):
     raise FuseOSError(errno.ENOSYS)
-
-  def mknod(self, path, mode, dev):
-    raise NotImplementedError()
-    return os.mknod(self._full_path(path), mode, dev)
 
   def rmdir(self, path):
     raise NotImplementedError()
@@ -107,18 +96,14 @@ class DFSFuse(LoggingMixIn, Operations):
     return os.unlink(self._full_path(path))
 
   def symlink(self, name, target):
-    raise FuseOSError(errno.ENOSYS)
+    raise FuseOSError(errno.EROFS)
 
   def rename(self, old, new):
     raise NotImplementedError()
     return os.rename(self._full_path(old), self._full_path(new))
 
   def link(self, target, name):
-    raise FuseOSError(errno.ENOSYS)
-
-  def utimens(self, path, times=None):
-    raise NotImplementedError()
-    return os.utime(self._full_path(path), times)
+    raise FuseOSError(errno.EROFS)
 
   # File methods
   # ============
@@ -148,15 +133,6 @@ class DFSFuse(LoggingMixIn, Operations):
     full_path = self._full_path(path)
     with open(full_path, 'r+') as f:
       f.truncate(length)
-
-  def flush(self, path, fh):
-    return 0
-
-  def release(self, path, fh):
-    return 0
-
-  def fsync(self, path, fdatasync, fh):
-    return 0
 
   def destroy(self, path):
     self._client.close()
