@@ -74,7 +74,7 @@ class DFSFuse(LoggingMixIn, Operations):
     return dirents
 
   def readlink(self, path):
-    raise FuseOSError(errno.ENOSYS)
+    raise FuseOSError(errno.ENOENT)
 
   def rmdir(self, path):
     self._client.rmdir(path)
