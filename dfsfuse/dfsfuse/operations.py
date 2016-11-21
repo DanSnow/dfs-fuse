@@ -8,8 +8,9 @@ from fuse import Operations, LoggingMixIn
 logger = getLogger('DFSFuse')
 
 class DFSFuse(LoggingMixIn, Operations):
-  def __init__(self, client):
+  def __init__(self, client, config):
     self._client = client
+    self._config = config
 
   def access(self, path, mode):
     logger.info('access path: %s, mode: %s', path, mode)
@@ -24,11 +25,19 @@ class DFSFuse(LoggingMixIn, Operations):
     return 0 # Not support
 
   def getattr(self, path, fh=None):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    st = os.lstat(full_path)
-    return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
-                                                    'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
+    if not self._client.has(path):
+      return errno.ENOENT
+    meta = client.stat(path)
+    return {
+      'st_atime': meta['ctime'],
+      'st_mtime': meta['ctime'],
+      'st_ctime': meta['ctime'],
+      'st_gid': self._config.gid,
+      'st_uid': self._config.uid,
+      'st_mode': 0o700,
+      'st_nlink': 1,
+      'st_size': 1
+    }
 
   def readdir(self, path, fh):
     dirents = self._client.readdir(path)
