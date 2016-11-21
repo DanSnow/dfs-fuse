@@ -14,6 +14,7 @@ class MemoryFS:
       return True
     return False
 
+
   def tree(self, root = '/'):
     indent = 0
     if root != '/':
@@ -51,3 +52,8 @@ class MemoryFS:
 
   def getid(self, path):
     return self._paths[path]['id']
+
+  def getmeta(self, path):
+    if not self.has(path):
+      raise TypeError('Path not exist')
+    return self._meta[path]
