@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import errno
+import os
 from stat import S_IFDIR, S_IFREG
 from dateutil import parser as dateparser
 from logging import getLogger
@@ -81,8 +82,11 @@ class DFSFuse(LoggingMixIn, Operations):
     return os.rmdir(full_path)
 
   def mkdir(self, path, mode):
-    raise NotImplementedError()
-    return os.mkdir(self._full_path(path), mode)
+    if self._client.has(path):
+      raise FuseOSError(errno.EEXIST)
+    (head, tail) = os.path.split(path)
+    self._client.mkdir(head, tail)
+    return 0
 
   def statfs(self, path):
     return {
