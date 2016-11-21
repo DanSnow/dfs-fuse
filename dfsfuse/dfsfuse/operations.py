@@ -77,9 +77,8 @@ class DFSFuse(LoggingMixIn, Operations):
     raise FuseOSError(errno.ENOSYS)
 
   def rmdir(self, path):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    return os.rmdir(full_path)
+    self._client.rmdir(path)
+    return 0
 
   def mkdir(self, path, mode):
     if self._client.has(path):
