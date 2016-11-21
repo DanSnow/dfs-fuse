@@ -2,8 +2,9 @@
 # encoding: utf-8
 
 import errno
+from dateutil import parser as dateparser
 from logging import getLogger
-from fuse import Operations, LoggingMixIn
+from fuse import Operations, LoggingMixIn, FuseOSError
 
 logger = getLogger('DFSFuse')
 
@@ -16,7 +17,7 @@ class DFSFuse(LoggingMixIn, Operations):
     logger.info('access path: %s, mode: %s', path, mode)
     if self._client.has(path):
       return 0
-    return errno.ENOENT
+    raise FuseOSError(errno.ENOENT)
 
   def chmod(self, path, mode):
     return 0 # Not support
@@ -26,12 +27,13 @@ class DFSFuse(LoggingMixIn, Operations):
 
   def getattr(self, path, fh=None):
     if not self._client.has(path):
-      return errno.ENOENT
-    meta = client.stat(path)
+      raise FuseOSError(errno.ENOENT)
+    meta = self._client.stat(path)
+    time = dateparser.parse(meta['ctime']).timestamp()
     return {
-      'st_atime': meta['ctime'],
-      'st_mtime': meta['ctime'],
-      'st_ctime': meta['ctime'],
+      'st_atime': time,
+      'st_mtime': time,
+      'st_ctime': time,
       'st_gid': self._config.gid,
       'st_uid': self._config.uid,
       'st_mode': 0o700,
