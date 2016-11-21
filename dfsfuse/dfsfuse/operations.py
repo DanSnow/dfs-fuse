@@ -26,8 +26,11 @@ class DFSFuse(LoggingMixIn, Operations):
     return 0 # Not support
 
   def getattr(self, path, fh=None):
+    logger.info('getattr: path: %s', path)
     if not self._client.has(path):
+      logger.info('getattr: No such file %s', path)
       raise FuseOSError(errno.ENOENT)
+    logger.info('getattr: Found %s', path)
     meta = self._client.stat(path)
     time = dateparser.parse(meta['ctime']).timestamp()
     return {
@@ -48,8 +51,10 @@ class DFSFuse(LoggingMixIn, Operations):
     return []
 
   def readdir(self, path, fh):
-    dirents = self._client.readdir(path)
-    return dirents.keys()
+    logger.info('readdir: path: %s', path)
+    dirents = self._client.readdir(path).keys()
+    logger.info('readdir: dirents: %s', dirents)
+    return dirents
     # full_path = self._full_path(path)
     #
     # dirents = ['.', '..']
