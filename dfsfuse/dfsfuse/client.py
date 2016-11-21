@@ -35,6 +35,13 @@ class Client():
       logger.error('Ping fail')
       raise RuntimeError('Ping: unexpected response')
 
+  def stat(self, path):
+    if self._fs.has(path):
+      return self._fs.getmeta(path)
+    if self.has(path):
+      return self._fs.getmeta(path)
+    raise TypeError('Path not exist')
+
   def has(self, path):
     deque = collections.deque()
     cur_path = path
