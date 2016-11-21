@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import errno
+from stat import S_IFDIR, S_IFREG
 from dateutil import parser as dateparser
 from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
@@ -31,17 +32,32 @@ class DFSFuse(LoggingMixIn, Operations):
       logger.info('getattr: No such file %s', path)
       raise FuseOSError(errno.ENOENT)
     logger.info('getattr: Found %s', path)
+
+    # Deal with root
+    if path == '/':
+      return {
+        'st_mode': (S_IFDIR | 0o755),
+        'st_nlink': 2
+      }
+
     meta = self._client.stat(path)
-    time = dateparser.parse(meta['ctime']).timestamp()
+    time = int(dateparser.parse(meta['ctime']).timestamp())
+
+    mode = 0o750
+    # Here must set file type
+    if meta['type'] == 'dir':
+      mode |= S_IFDIR
+    else:
+      mode |= S_IFREG
+
     return {
       'st_atime': time,
       'st_mtime': time,
       'st_ctime': time,
       'st_gid': self._config.gid,
       'st_uid': self._config.uid,
-      'st_mode': 0o700,
-      'st_nlink': 1,
-      'st_size': 1
+      'st_mode': mode,
+      'st_nlink': 2
     }
 
   def getxattr(self, path, name, position = 0):
