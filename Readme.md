@@ -5,7 +5,7 @@ dfs-fuse
 
 ## Description ##
 This is a [FUSE][FUSE] client for [DFS][DFS].  
-It is our undergraduate's project, so **DON'T USE IN PRODUCTION**.  
+It is our undergraduate's project, so **DON'T USE IN PRODUCT**.  
 
 ## Usage ##
 ```shell
