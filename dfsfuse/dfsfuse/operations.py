@@ -84,6 +84,9 @@ class DFSFuse(LoggingMixIn, Operations):
   def mkdir(self, path, mode):
     if self._client.has(path):
       raise FuseOSError(errno.EEXIST)
+    return self._mkdir(path)
+
+  def _mkdir(self, path):
     (head, tail) = os.path.split(path)
     self._client.mkdir(head, tail)
     return 0
@@ -103,8 +106,16 @@ class DFSFuse(LoggingMixIn, Operations):
     raise FuseOSError(errno.EROFS)
 
   def rename(self, old, new):
-    raise NotImplementedError()
-    return os.rename(self._full_path(old), self._full_path(new))
+    if not self._client.has(old):
+      raise FuseOSError(errno.ENOENT)
+    if self._client.has(new):
+      raise FuseOSError(errno.EEXIST)
+    meta = self._client.stat(old)
+    if meta['type'] == 'dir':
+      self._client.rmdir(old)
+      return self._mkdir(new)
+    else:
+      raise FuseOSError(errno.EFAULT)
 
   def link(self, target, name):
     raise FuseOSError(errno.EROFS)
