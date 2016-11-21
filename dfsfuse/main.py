@@ -1,3 +1,4 @@
+import os
 import argparse
 from logging import getLogger
 from fuse import FUSE
@@ -8,7 +9,7 @@ def run_fuse(args):
   logger.info('Run fuse')
   client = Client(host = args.host, port = args.port, psk = args.key)
 
-  fuse = FUSE(DFSFuse(client), args.mount, foreground=True)
+  fuse = FUSE(DFSFuse(client, args), args.mount, foreground=True)
 
 def main(argv):
   logger = getLogger('main')
@@ -38,6 +39,23 @@ def main(argv):
     default = 4096,
     type = int
   )
+
+  parser.add_argument(
+    '-u',
+    '--uid',
+    help = 'Uid',
+    default = os.getuid(),
+    type = int
+  )
+
+  parser.add_argument(
+    '-g',
+    '--gid',
+    help = 'Gid',
+    default = os.getgid(),
+    type = int
+  )
+
   args = parser.parse_args()
   run_fuse(args)
 
