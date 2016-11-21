@@ -98,8 +98,9 @@ class DFSFuse(LoggingMixIn, Operations):
     }
 
   def unlink(self, path):
-    raise NotImplementedError()
-    return os.unlink(self._full_path(path))
+    if not self._client.rm(path):
+      raise FuseOSError(errno.ENOENT)
+    return 0
 
   def symlink(self, name, target):
     raise FuseOSError(errno.EROFS)
