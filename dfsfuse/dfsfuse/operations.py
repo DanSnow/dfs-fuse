@@ -116,7 +116,10 @@ class DFSFuse(LoggingMixIn, Operations):
       self._client.rmdir(old)
       return self._mkdir(new)
     else:
-      raise FuseOSError(errno.EFAULT)
+      content = self._client.read(old)
+      self._client.write(new, content)
+      self._fs.loadfile(new, content)
+      return 0
 
   def link(self, target, name):
     raise FuseOSError(errno.EROFS)
