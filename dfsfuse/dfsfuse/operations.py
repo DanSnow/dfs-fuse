@@ -124,9 +124,19 @@ class DFSFuse(LoggingMixIn, Operations):
   # ============
 
   def open(self, path, flags):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    return os.open(full_path, flags)
+    if flags & os.ORDONLY:
+      if self.has(path):
+        raise FuseOSError(errno.ENOENT)
+      self._fs.loadfile(path, self._client.read(path))
+    elif flags & os.O_WRONLY:
+      if flags & os.O_CREAT and flags & os.O_EXCL and self.has(path):
+        raise FuseOSError(errno.ENOENT)
+      if not (flags & os.APPEND):
+        self._client.write(path, '')
+        self._fs.loadfile(path, '')
+      else:
+        self._fs.loadfile(path, self._client.read(path))
+    return 0
 
   def create(self, path, mode, fi=None):
     self._client.write(path, '')
