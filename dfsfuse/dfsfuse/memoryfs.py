@@ -14,7 +14,6 @@ class MemoryFS:
       return True
     return False
 
-
   def tree(self, root = '/'):
     indent = 0
     if root != '/':
