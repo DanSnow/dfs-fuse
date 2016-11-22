@@ -129,9 +129,9 @@ class DFSFuse(LoggingMixIn, Operations):
     return os.open(full_path, flags)
 
   def create(self, path, mode, fi=None):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    return os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
+    self._client.write(path, '')
+    self._fs.loadfile(path, '')
+    return 0
 
   def read(self, path, length, offset, fh):
     raise NotImplementedError()
