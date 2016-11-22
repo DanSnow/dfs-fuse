@@ -37,9 +37,7 @@ class MemoryFS:
   def adddir(self, path, content):
     self._paths[path] = content['.']
     self._meta[path] = content['.']
-    self._meta[path].update({
-      'children': set()
-    })
+    self._meta[path]['children'] = set()
 
     for name, meta in content.items():
       if name == '..' or name == '.':
