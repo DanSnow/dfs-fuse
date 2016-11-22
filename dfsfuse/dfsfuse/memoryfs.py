@@ -47,6 +47,11 @@ class MemoryFS:
       self._meta[path]['children'].add(child_path)
       self._meta[child_path] = meta
 
+  def loadfile(self, path, content):
+    if not self.isfile(path):
+      raise TypeError('Path is not file')
+    self._meta[path]['content'] = content
+
   def getid(self, path):
     return self._paths[path]['id']
 
