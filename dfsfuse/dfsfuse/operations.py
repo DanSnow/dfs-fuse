@@ -7,6 +7,7 @@ from stat import S_IFDIR, S_IFREG
 from dateutil import parser as dateparser
 from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
+from .fileoper import read, write, truncate
 
 logger = getLogger('DFSFuse')
 
@@ -144,20 +145,19 @@ class DFSFuse(LoggingMixIn, Operations):
     return 0
 
   def read(self, path, length, offset, fh):
-    raise NotImplementedError()
-    os.lseek(fh, offset, os.SEEK_SET)
-    return os.read(fh, length)
+    return read(self._fs.getcontent(path), offset, length)
 
   def write(self, path, buf, offset, fh):
-    raise NotImplementedError()
-    os.lseek(fh, offset, os.SEEK_SET)
-    return os.write(fh, buf)
+    new_content = write(self._fs.getcontent(path), buf, offset)
+    self._fs.loadfile(path, new_content)
+    self._client.write(path, new_content)
+    return len(buf)
 
   def truncate(self, path, length, fh=None):
-    raise NotImplementedError()
-    full_path = self._full_path(path)
-    with open(full_path, 'r+') as f:
-      f.truncate(length)
+    new_content = truncate(self._fs.getcontent(path), length)
+    self._fs.loadfile(path, new_content)
+    self._client.write(path, new_content)
+    return 0
 
   def destroy(self, path):
     self._client.close()
