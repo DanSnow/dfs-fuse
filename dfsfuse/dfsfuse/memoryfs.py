@@ -59,3 +59,11 @@ class MemoryFS:
     if not self.has(path):
       raise TypeError('Path not exist')
     return self._meta[path]
+
+  def getcontent(self, path):
+    if not self.isfile(path):
+      raise TypeError('Path is not file')
+    content = getattr(self._meta[path], 'content')
+    if content is None:
+      raise RuntimeError('Content not loaded')
+    return content
