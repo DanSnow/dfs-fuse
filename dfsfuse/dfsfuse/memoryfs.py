@@ -26,7 +26,7 @@ class MemoryFS:
   def readdir(self, path):
     if path not in self._meta:
       raise TypeError('Path not exist')
-    return self._paths[path]
+    return list(self._meta[path]['children'])
 
   def isdir(self, path):
     return self.has(path) and self._meta[path]['type'] == 'dir'
@@ -35,7 +35,6 @@ class MemoryFS:
     return self.has(path) and self._meta[path]['type'] == 'file'
 
   def adddir(self, path, content):
-    self._paths[path] = content['.']
     self._meta[path] = content['.']
     self._meta[path]['children'] = set()
 
@@ -44,7 +43,7 @@ class MemoryFS:
         continue
       child_path = os.path.join(path, name)
       self._paths[child_path] = meta
-      self._meta[path]['children'].add(child_path)
+      self._meta[path]['children'].add(name)
       self._meta[child_path] = meta
 
   def loadfile(self, path, content):
@@ -53,7 +52,7 @@ class MemoryFS:
     self._meta[path]['content'] = content
 
   def getid(self, path):
-    return self._paths[path]['id']
+    return self._meta[path]['id']
 
   def getmeta(self, path):
     if not self.has(path):

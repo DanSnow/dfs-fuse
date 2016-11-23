@@ -38,7 +38,14 @@ def _catch_exceptions(func):
   def _wrapper(*args, **kargs):
     try:
       return func(*args, **kargs)
-    except (TimeoutError, ServerError):
+    except OSError as err:
+      logger.exception(err)
+      raise err
+    except ServerError as err:
+      logger.exception(err)
+      raise FuseOSError(errno.EIO)
+    except TimeoutError:
+      logger.error('Timeout')
       raise FuseOSError(errno.EIO)
     except (TypeError, InternalError) as err:
       logger.exception(err)

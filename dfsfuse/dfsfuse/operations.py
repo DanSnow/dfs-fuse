@@ -76,7 +76,7 @@ class DFSFuse(LoggingMixIn, Operations):
   @retryable
   def readdir(self, path, fh):
     logger.info('readdir: path: %s', path)
-    dirents = self._client.readdir(path).keys()
+    dirents = self._client.readdir(path)
     logger.info('readdir: dirents: %s', dirents)
     return dirents
 

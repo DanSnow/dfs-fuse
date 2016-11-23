@@ -4,9 +4,12 @@ import collections
 import hashlib
 import socket
 import json
+import pickle
+from hirlite import Rlite
 from .packet import Packet
 from .memoryfs import MemoryFS
 from .exception import TimeoutError, ServerError, InternalError, DisconnectError, AuthError
+
 
 logger = getLogger('Client')
 socket.setdefaulttimeout(5)
@@ -17,6 +20,7 @@ class Client():
     self._host = host
     self._port = port
     self._psk = hashlib.md5(psk.encode('utf-8')).hexdigest()
+    self._rlite = Rlite()
     self._fs = MemoryFS()
     self._connect()
     self._init()
@@ -80,7 +84,7 @@ class Client():
     if body != 'OK':
       raise ServerError('Write fail')
     self._fs.loadfile(path, content)
-    self.readdir(parent_path)
+    self._readdir(parent_path)
     return True
 
   def read(self, path):
@@ -101,7 +105,7 @@ class Client():
     header, body = self.request('file#rm', header = { 'id': id })
     if body != 'OK':
       raise ServerError('Rm fail')
-    self.readdir(parent_path)
+    self._readdir(parent_path)
     return True
 
   def mv(self, old, new):
@@ -139,12 +143,22 @@ class Client():
     return True
 
   def readdir(self, path):
-    id = self._fs.getid(path)
-    data = self._readdir(id)
-    self._fs.adddir(path, data)
-    return data
+    cache_key = '{0}:cache'.format(path)
+    if self._rlite.exists(cache_key):
+      dirents = self._fs.readdir(path)
+      logger.info('cached dirents: %s', dirents)
+      return dirents
+    return self._readdir(path)
 
-  def _readdir(self, id = None):
+  def _readdir(self, path):
+    cache_key = '{0}:cache'.format(path)
+    id = self._fs.getid(path)
+    data = self._readdir_with_id(id)
+    self._fs.adddir(path, data)
+    self._rlite.set(cache_key, 'cached', 'ex', '20')
+    return data.keys()
+
+  def _readdir_with_id(self, id = None):
     _, body = self.request('dir#list', header = { 'id': id })
     data = json.loads(body)
     return data
@@ -154,14 +168,14 @@ class Client():
     _, body = self.request('dir#add', header = { 'id': parent_id, 'name': name })
     if body != 'OK':
       raise ServerError('Mkdir fail')
-    return self.readdir(path)
+    return self._readdir(path)
 
   def rmdir(self, path):
     id = self._fs.getid(path)
     _, body = self.request('dir#rm', header = { 'id': id })
     if body != 'OK':
       raise ServerError('Rmdir fail')
-    self.readdir(path)
+    self._readdir(path)
     return True
 
   def request(self, request, body = b'', header = {}):
@@ -183,10 +197,11 @@ class Client():
   def _init(self):
     self.login()
     self._fs.reset()
+    self._rlite.flushall()
     self._init_root()
 
   def _init_root(self):
-    data = self._readdir()
+    data = self._readdir_with_id()
     self._fs.adddir('/', data)
 
   def _send(self, packet):
