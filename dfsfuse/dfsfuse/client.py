@@ -108,7 +108,7 @@ class Client():
     (head, tail) = os.path.split(new)
     if not self._fs.has(head):
       raise RuntimeError('target {0} not exist'.format(head))
-    parend_id = self._fs.getid(head)
+    parent_id = self._fs.getid(head)
     if meta['type'] == 'file':
       return self._mvfile(id, parent_id, tail)
     else:
