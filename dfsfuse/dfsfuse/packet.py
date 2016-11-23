@@ -8,16 +8,16 @@ import select
 logger = getLogger('Packet')
 
 class Packet:
-  def __init__(self, header = {}, body = ""):
+  def __init__(self, header = {}, body = ''):
     self.header = {}
     self.header.update(header)
     self.set(body)
 
   def set(self, header, value = None):
     if value is None:
-      self._body = header
       logger.info('Set body: %s', header)
       self.set('content-length', len(header))
+      self._body = header
     else:
       logger.info('Set header: %s -> %s', header, value)
       self.header[header] = value
@@ -54,7 +54,7 @@ class Packet:
     return s
 
   def check(self):
-    l = self.get('content-length')
+    l = int(self.get('content-length'))
     if l == None:
       logger.error('Check fail: format error')
       return None
@@ -62,14 +62,20 @@ class Packet:
       return True
     return False
 
+
+  def _set_body(self, buf):
+    l = int(self.get('content-length'))
+    self._body = self._body + buf
+    content = self._body
+    if len(content) > l:
+      self._body = content[0:l]
+
   @staticmethod
   def parse(pkt, x):
     buf = StringIO(x.decode('utf-8'))
 
     logger.info('Start parse')
-    logger.info('pkt: %s', pkt)
     if pkt is None:
-      logger.info('New packet')
       pkt = Packet()
       while True:
         tmp = str(buf.readline().rstrip())
@@ -80,9 +86,6 @@ class Packet:
         if len(tmp) == 2:
           pkt.set(tmp[0], tmp[1].strip())
 
-    l = pkt.get('content-length')
-    pkt.set(pkt.get() + buf.read())
-    content = pkt.get()
-    if len(content) > l:
-      pkt.set(content[0:l])
+    pkt._set_body(buf.read())
+
     return pkt
