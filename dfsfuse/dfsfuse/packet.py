@@ -74,5 +74,9 @@ class Packet:
         tmp = tmp.split(':', 1)
         if len(tmp) == 2:
           pkt.set(tmp[0], tmp[1].strip())
-    pkt.set(pkt.get() + buf.read().rstrip())
+    l = pkt.get('content-length')
+    pkt.set(pkt.get() + buf.read())
+    content = self.get()
+    if len(content) > l:
+      pkg.set(content[0:l])
     return pkt
