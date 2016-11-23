@@ -1,16 +1,48 @@
 import errno
 from types import FunctionType
 from functools import wraps
+from logging import getLogger
 from fuse import FuseOSError
-from .exception import TimeoutError
+from .exception import TimeoutError, ServerError, InternalError, DisconnectError
+
+logger = getLogger('decorator')
+
+def retryable(func):
+  @wraps(func)
+  def _wrapper(*args, **kargs):
+    retry = 1
+    while retry < 3:
+      try:
+        return func(*args, **kargs)
+      except DisconnectError:
+        logger.error('Connection lost, retry %s', retry)
+        args[0]._client.reconnect()
+        retry += 1
+    logger.error('Too many retries')
+    raise FuseOSError(errno.EIO)
+  return _wrapper
+
+def nonretryable(func):
+  @wraps(func)
+  def _wrapper(*args, **kargs):
+    try:
+      return func(*args, **kargs)
+    except DisconnectError:
+      logger.error('Connection lost, not retryable, reconnecting...')
+      args[0]._client.reconnect()
+      raise FuseOSError(errno.EIO)
+  return _wrapper
 
 def _catch_exceptions(func):
   @wraps(func)
   def _wrapper(*args, **kargs):
     try:
       return func(*args, **kargs)
-    except TimeoutError:
+    except (TimeoutError, ServerError):
       raise FuseOSError(errno.EIO)
+    except (TypeError, InternalError) as err:
+      logger.exception(err)
+      raise FuseOSError(errno.EFAULT)
   return _wrapper
 
 def catch_client_exceptions(klass):
