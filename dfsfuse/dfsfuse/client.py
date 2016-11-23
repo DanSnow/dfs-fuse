@@ -77,6 +77,7 @@ class Client():
     _, body = self.request('file#put', header = { 'id': id, 'name': name }, body = content)
     if body != 'OK':
       raise RuntimeError('Write fail')
+    self._fs.loadfile(path, content)
     self.readdir(parent_path)
     return True
 
@@ -87,6 +88,7 @@ class Client():
     header, body = self.request('file#get', header = { 'id': id })
     if header['result'] != 'OK':
       raise RuntimeError('Read fail')
+    self._fs.loadfile(path, body)
     return body
 
   def rm(self, path):
