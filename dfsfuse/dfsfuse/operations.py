@@ -139,7 +139,7 @@ class DFSFuse(LoggingMixIn, Operations):
     elif flags & os.O_WRONLY:
       if flags & os.O_CREAT and flags & os.O_EXCL and self.has(path):
         raise FuseOSError(errno.ENOENT)
-      if not (flags & os.APPEND):
+      if not (flags & os.O_APPEND):
         self._client.write(path, '')
     return 0
 
