@@ -131,18 +131,14 @@ class DFSFuse(LoggingMixIn, Operations):
   # ============
 
   def open(self, path, flags):
-    if flags & os.ORDONLY:
+    if flags & os.O_RDONLY:
       if self.has(path):
         raise FuseOSError(errno.ENOENT)
-      self._fs.loadfile(path, self._client.read(path))
     elif flags & os.O_WRONLY:
       if flags & os.O_CREAT and flags & os.O_EXCL and self.has(path):
         raise FuseOSError(errno.ENOENT)
       if not (flags & os.APPEND):
         self._client.write(path, '')
-        self._fs.loadfile(path, '')
-      else:
-        self._fs.loadfile(path, self._client.read(path))
     return 0
 
   def create(self, path, mode, fi=None):
@@ -151,17 +147,15 @@ class DFSFuse(LoggingMixIn, Operations):
     return 0
 
   def read(self, path, length, offset, fh):
-    return read(self._fs.getcontent(path), offset, length)
+    return read(self._client.read(path), offset, length)
 
   def write(self, path, buf, offset, fh):
-    new_content = write(self._fs.getcontent(path), buf, offset)
-    self._fs.loadfile(path, new_content)
+    new_content = write(self._client.read(path), buf, offset)
     self._client.write(path, new_content)
     return len(buf)
 
   def truncate(self, path, length, fh=None):
-    new_content = truncate(self._fs.getcontent(path), length)
-    self._fs.loadfile(path, new_content)
+    new_content = truncate(self._client.read(path), length)
     self._client.write(path, new_content)
     return 0
 
