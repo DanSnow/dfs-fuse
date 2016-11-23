@@ -115,21 +115,15 @@ class DFSFuse(LoggingMixIn, Operations):
   def symlink(self, name, target):
     raise FuseOSError(errno.EROFS)
 
-  @nonretryable
+  @retryable
   def rename(self, old, new):
     if not self._client.has(old):
       raise FuseOSError(errno.ENOENT)
     if self._client.has(new):
       raise FuseOSError(errno.EEXIST)
-    meta = self._client.stat(old)
-    if meta['type'] == 'dir':
-      self._client.rmdir(old)
-      return self._mkdir(new)
-    else:
-      content = self._client.read(old)
-      self._client.write(new, content)
-      self._fs.loadfile(new, content)
-      return 0
+    self._client.mv(old, new)
+    return 0
+
 
   def link(self, target, name):
     raise FuseOSError(errno.EROFS)
