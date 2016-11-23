@@ -13,3 +13,6 @@ class InternalError(DFSError):
 class DisconnectError(DFSError):
   pass
 
+class AuthError(DFSError):
+  pass
+

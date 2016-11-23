@@ -6,7 +6,7 @@ import socket
 import json
 from .packet import Packet
 from .memoryfs import MemoryFS
-from .exception import TimeoutError, ServerError, InternalError, DisconnectError
+from .exception import TimeoutError, ServerError, InternalError, DisconnectError, AuthError
 
 logger = getLogger('Client')
 socket.setdefaulttimeout(5)
@@ -27,7 +27,7 @@ class Client():
     _, body = self.request('auth#login', header = { 'psk': self._psk  })
     if body != 'OK':
       logger.error('Login fail')
-      raise RuntimeError('Login fail')
+      raise AuthError('Login fail')
     logger.info('Login success')
 
   def ping(self):
