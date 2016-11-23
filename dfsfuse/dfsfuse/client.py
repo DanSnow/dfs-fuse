@@ -212,8 +212,6 @@ class Client():
     buf = self._socket.recv(4096)
     if len(buf) == 0:
       return None
-    logger.info('buf: %s', buf)
-    logger.info('Call parse')
     pkt = Packet.parse(None, buf)
     while True:
       if not pkt:
