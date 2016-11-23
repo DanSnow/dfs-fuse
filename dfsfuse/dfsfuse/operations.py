@@ -8,9 +8,11 @@ from dateutil import parser as dateparser
 from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
 from .fileoper import read, write, truncate
+from .decorator import catch_client_exceptions
 
 logger = getLogger('DFSFuse')
 
+@catch_client_exceptions
 class DFSFuse(LoggingMixIn, Operations):
   def __init__(self, client, config):
     self._client = client
