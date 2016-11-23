@@ -43,6 +43,7 @@ class DFSFuse(LoggingMixIn, Operations):
       }
 
     meta = self._client.stat(path)
+    logger.info('getattr: meta: %s', meta)
     time = int(dateparser.parse(meta['ctime']).timestamp())
 
     mode = 0o750
@@ -52,7 +53,7 @@ class DFSFuse(LoggingMixIn, Operations):
     else:
       mode |= S_IFREG
 
-    size = getattr(meta, 'size', 1)
+    size = meta.get('size', 1)
 
     return {
       'st_atime': time,
@@ -64,9 +65,6 @@ class DFSFuse(LoggingMixIn, Operations):
       'st_nlink': 2,
       'st_size': size
     }
-
-  def getxattr(self, path, name, position = 0):
-    return ''
 
   def listxattr(self, path):
     return []
