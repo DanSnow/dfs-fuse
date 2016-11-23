@@ -52,6 +52,8 @@ class DFSFuse(LoggingMixIn, Operations):
     else:
       mode |= S_IFREG
 
+    size = getattr(meta, 'size', 1)
+
     return {
       'st_atime': time,
       'st_mtime': time,
@@ -59,7 +61,8 @@ class DFSFuse(LoggingMixIn, Operations):
       'st_gid': self._config.gid,
       'st_uid': self._config.uid,
       'st_mode': mode,
-      'st_nlink': 2
+      'st_nlink': 2,
+      'st_size': size
     }
 
   def getxattr(self, path, name, position = 0):
