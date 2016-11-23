@@ -6,8 +6,10 @@ import socket
 import json
 from .packet import Packet
 from .memoryfs import MemoryFS
+from .exception import TimeoutError
 
 logger = getLogger('Client')
+socket.setdefaulttimeout(5)
 
 class Client():
   def __init__(self, host = 'localhost', port = 4096, psk = ''):
@@ -209,7 +211,10 @@ class Client():
 
   def _read_response(self):
     logger.info('Read response')
-    buf = self._socket.recv(4096)
+    try:
+      buf = self._socket.recv(4096)
+    except socket.timeout:
+      raise TimeoutError()
     if len(buf) == 0:
       return None
     pkt = Packet.parse(None, buf)
@@ -217,7 +222,10 @@ class Client():
       if not pkt:
         break
       if not pkt.check():
-        buf = self._socket.recv(4096)
+        try:
+          buf = self._socket.recv(4096)
+        except socket.timeout:
+          raise TimeoutError()
         if len(buf) == 0:
           pkt = None
           break
