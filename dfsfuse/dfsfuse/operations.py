@@ -8,7 +8,7 @@ from dateutil import parser as dateparser
 from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
 from .fileoper import read, write, truncate
-from .decorator import catch_client_exceptions
+from .decorator import catch_client_exceptions, retryable, nonretryable
 
 logger = getLogger('DFSFuse')
 
@@ -18,6 +18,7 @@ class DFSFuse(LoggingMixIn, Operations):
     self._client = client
     self._config = config
 
+  @retryable
   def access(self, path, mode):
     logger.info('access path: %s, mode: %s', path, mode)
     if self._client.has(path):
@@ -30,6 +31,7 @@ class DFSFuse(LoggingMixIn, Operations):
   def chown(self, path, mode):
     return 0 # Not support
 
+  @retryable
   def getattr(self, path, fh=None):
     logger.info('getattr: path: %s', path)
     if not self._client.has(path):
@@ -71,6 +73,7 @@ class DFSFuse(LoggingMixIn, Operations):
   def listxattr(self, path):
     return []
 
+  @retryable
   def readdir(self, path, fh):
     logger.info('readdir: path: %s', path)
     dirents = self._client.readdir(path).keys()
@@ -80,10 +83,12 @@ class DFSFuse(LoggingMixIn, Operations):
   def readlink(self, path):
     raise FuseOSError(errno.ENOENT)
 
+  @retryable
   def rmdir(self, path):
     self._client.rmdir(path)
     return 0
 
+  @retryable
   def mkdir(self, path, mode):
     if self._client.has(path):
       raise FuseOSError(errno.EEXIST)
@@ -101,6 +106,7 @@ class DFSFuse(LoggingMixIn, Operations):
       'f_bavail': 2048
     }
 
+  @retryable
   def unlink(self, path):
     if not self._client.rm(path):
       raise FuseOSError(errno.ENOENT)
@@ -109,6 +115,7 @@ class DFSFuse(LoggingMixIn, Operations):
   def symlink(self, name, target):
     raise FuseOSError(errno.EROFS)
 
+  @nonretryable
   def rename(self, old, new):
     if not self._client.has(old):
       raise FuseOSError(errno.ENOENT)
@@ -130,6 +137,7 @@ class DFSFuse(LoggingMixIn, Operations):
   # File methods
   # ============
 
+  @nonretryable
   def open(self, path, flags):
     if flags & os.O_RDONLY:
       if self.has(path):
@@ -143,17 +151,19 @@ class DFSFuse(LoggingMixIn, Operations):
 
   def create(self, path, mode, fi=None):
     self._client.write(path, '')
-    self._fs.loadfile(path, '')
     return 0
 
+  @retryable
   def read(self, path, length, offset, fh):
     return read(self._client.read(path), offset, length)
 
+  @retryable
   def write(self, path, buf, offset, fh):
     new_content = write(self._client.read(path), buf, offset)
     self._client.write(path, new_content)
     return len(buf)
 
+  @retryable
   def truncate(self, path, length, fh=None):
     new_content = truncate(self._client.read(path), length)
     self._client.write(path, new_content)
