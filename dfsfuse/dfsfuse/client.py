@@ -6,7 +6,7 @@ import socket
 import json
 from .packet import Packet
 from .memoryfs import MemoryFS
-from .exception import TimeoutError
+from .exception import TimeoutError, ServerError, InternalError, DisconnectError
 
 logger = getLogger('Client')
 socket.setdefaulttimeout(5)
@@ -35,7 +35,7 @@ class Client():
     _, body = self.request('echo#echo', body = b'ping')
     if body != 'ping':
       logger.error('Ping fail')
-      raise RuntimeError('Ping: unexpected response')
+      raise ServerError('Ping: unexpected response')
 
   def stat(self, path):
     if self._fs.has(path):
@@ -78,7 +78,7 @@ class Client():
     id = self._fs.getid(parent_path)
     _, body = self.request('file#put', header = { 'id': id, 'name': name }, body = content)
     if body != 'OK':
-      raise RuntimeError('Write fail')
+      raise ServerError('Write fail')
     self._fs.loadfile(path, content)
     self.readdir(parent_path)
     return True
@@ -89,7 +89,7 @@ class Client():
     id = self._fs.getid(path)
     header, body = self.request('file#get', header = { 'id': id })
     if header['result'] != 'OK':
-      raise RuntimeError('Read fail')
+      raise ServerError('Read fail')
     self._fs.loadfile(path, body)
     return body
 
@@ -100,7 +100,7 @@ class Client():
     id = self._fs.getid(path)
     header, body = self.request('file#rm', header = { 'id': id })
     if body != 'OK':
-      raise RuntimeError('Rm fail')
+      raise ServerError('Rm fail')
     self.readdir(parent_path)
     return True
 
@@ -125,7 +125,7 @@ class Client():
       'name': name
     })
     if body != 'OK':
-      raise RuntimeError('mvfile fail')
+      raise ServerError('mvfile fail')
     return True
 
   def _mvdir(self, id, parent_id, name):
@@ -135,7 +135,7 @@ class Client():
       'name': name
     })
     if body != 'OK':
-      raise RuntimeError('mvdir fail')
+      raise ServerError('mvdir fail')
     return True
 
   def readdir(self, path):
@@ -153,14 +153,14 @@ class Client():
     parent_id = self._fs.getid(path)
     _, body = self.request('dir#add', header = { 'id': parent_id, 'name': name })
     if body != 'OK':
-      raise RuntimeError('Mkdir fail')
+      raise ServerError('Mkdir fail')
     return self.readdir(path)
 
   def rmdir(self, path):
     id = self._fs.getid(path)
     _, body = self.request('dir#rm', header = { 'id': id })
     if body != 'OK':
-      raise RuntimeError('Rmdir fail')
+      raise ServerError('Rmdir fail')
     self.readdir(path)
     return True
 
@@ -172,7 +172,7 @@ class Client():
     self._send(Packet(_header, body))
     pkt = self._read_response()
     if not pkt:
-      raise RuntimeError('connection lost')
+      raise DisconnectError('connection lost')
     return (pkt.headers, pkt.body)
 
   def send(self, packet):

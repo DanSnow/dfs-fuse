@@ -3,3 +3,13 @@ class DFSError(RuntimeError):
 
 class TimeoutError(DFSError):
   pass
+
+class ServerError(DFSError):
+  pass
+
+class InternalError(DFSError):
+  pass
+
+class DisconnectError(DFSError):
+  pass
+
