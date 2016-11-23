@@ -64,19 +64,25 @@ class Packet:
 
   @staticmethod
   def parse(pkt, x):
-    if pkt == None:
+    buf = StringIO(x.decode('utf-8'))
+
+    logger.info('Start parse')
+    logger.info('pkt: %s', pkt)
+    if pkt is None:
+      logger.info('New packet')
       pkt = Packet()
-      buf = StringIO(x.decode('utf-8'))
       while True:
         tmp = str(buf.readline().rstrip())
         if tmp == '':
           break
         tmp = tmp.split(':', 1)
+        logger.info('Parse header: %s: %s', tmp[0], tmp[1])
         if len(tmp) == 2:
           pkt.set(tmp[0], tmp[1].strip())
+
     l = pkt.get('content-length')
     pkt.set(pkt.get() + buf.read())
-    content = self.get()
+    content = pkt.get()
     if len(content) > l:
-      pkg.set(content[0:l])
+      pkt.set(content[0:l])
     return pkt
