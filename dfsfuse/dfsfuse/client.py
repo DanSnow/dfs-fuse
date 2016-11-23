@@ -100,6 +100,40 @@ class Client():
     self.readdir(parent_path)
     return True
 
+  def mv(self, old, new):
+    if not self._fs.has(old):
+      raise RuntimeError('{0} not exist'.format(old))
+    id = self._fs.getid(old)
+    meta = self._fs.getmeta(old)
+    (head, tail) = os.path.split(new)
+    if not self._fs.has(head):
+      raise RuntimeError('target {0} not exist'.format(head))
+    parend_id = self._fs.getid(head)
+    if meta['type'] == 'file':
+      return self._mvfile(id, parent_id, tail)
+    else:
+      return self._mvdir(id, parent_id, tail)
+
+  def _mvfile(self, id, parent_id, name):
+    _, body = self.request('file#mvfile', header = {
+      'id': id,
+      'pdid': parent_id,
+      'name': name
+    })
+    if body != 'OK':
+      raise RuntimeError('mvfile fail')
+    return True
+
+  def _mvdir(self, id, parent_id, name):
+    _, body = self.request('dir#mvdir', header = {
+      'id': id,
+      'pdid': parent_id,
+      'name': name
+    })
+    if body != 'OK':
+      raise RuntimeError('mvdir fail')
+    return True
+
   def readdir(self, path):
     id = self._fs.getid(path)
     data = self._readdir(id)
