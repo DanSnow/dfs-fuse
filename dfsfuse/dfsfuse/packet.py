@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
-from io import StringIO
+from io import BytesIO
 from logging import getLogger
 import select
 
 logger = getLogger('Packet')
 
 class Packet:
-  def __init__(self, header = {}, body = ''):
+  def __init__(self, header = {}, body = b''):
     self.header = {}
     self.header.update(header)
     self.set(body)
@@ -72,13 +72,13 @@ class Packet:
 
   @staticmethod
   def parse(pkt, x):
-    buf = StringIO(x.decode('utf-8'))
+    buf = BytesIO(x)
 
     logger.info('Start parse')
     if pkt is None:
       pkt = Packet()
       while True:
-        tmp = str(buf.readline().rstrip())
+        tmp = buf.readline().decode('utf-8').rstrip()
         if tmp == '':
           break
         tmp = tmp.split(':', 1)

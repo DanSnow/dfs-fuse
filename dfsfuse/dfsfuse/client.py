@@ -30,7 +30,7 @@ class Client():
   def login(self):
     logger.info('Send login')
     _, body = self.request('auth#login', header = { 'psk': self._psk  })
-    if body != 'OK':
+    if body != b'OK':
       logger.error('Login fail')
       raise AuthError('Login fail')
     logger.info('Login success')
@@ -83,7 +83,7 @@ class Client():
     id = self._fs.getid(parent_path)
     logger.info('Write to %s, content len %s', path, len(content))
     _, body = self.request('file#put', header = { 'id': id, 'name': name }, body = content)
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('Write fail')
     self._readdir(parent_path)
     self._fs.loadfile(path, content)
@@ -105,7 +105,7 @@ class Client():
     parent_path = os.path.dirname(path)
     id = self._fs.getid(path)
     header, body = self.request('file#rm', header = { 'id': id })
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('Rm fail')
     self._readdir(parent_path)
     return True
@@ -130,7 +130,7 @@ class Client():
       'pdid': parent_id,
       'name': name
     })
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('mvfile fail')
     return True
 
@@ -140,7 +140,7 @@ class Client():
       'pdid': parent_id,
       'name': name
     })
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('mvdir fail')
     return True
 
@@ -163,20 +163,20 @@ class Client():
 
   def _readdir_with_id(self, id = None):
     _, body = self.request('dir#list', header = { 'id': id })
-    data = json.loads(body)
+    data = json.loads(body.decode('utf-8'))
     return data
 
   def mkdir(self, path, name):
     parent_id = self._fs.getid(path)
     _, body = self.request('dir#add', header = { 'id': parent_id, 'name': name })
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('Mkdir fail')
     return self._readdir(path)
 
   def rmdir(self, path):
     id = self._fs.getid(path)
     _, body = self.request('dir#rm', header = { 'id': id })
-    if body != 'OK':
+    if body != b'OK':
       raise ServerError('Rmdir fail')
     self._readdir(path)
     return True
