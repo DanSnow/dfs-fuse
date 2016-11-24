@@ -138,9 +138,9 @@ class Client():
       raise RuntimeError('target {0} not exist'.format(head))
     parent_id = self._fs.getid(head)
     if meta['type'] == 'file':
-      return self._mvfile(id, sock, parent_id, tail)
+      return self._mvfile(sock, id, parent_id, tail)
     else:
-      return self._mvdir(id, sock, parent_id, tail)
+      return self._mvdir(sock, id, parent_id, tail)
 
   def _mvfile(self, sock, id, parent_id, name):
     _, body = self.request(sock, 'file#mvfile', header = {
