@@ -9,7 +9,7 @@ def run_fuse(args):
   logger.info('Run fuse')
   if not args.debug:
     getLogger('Packet').setLevel(WARNING)
-  client = Client(host = args.host, port = args.port, psk = args.key)
+  client = Client(host = args.host, port = args.port, psk = args.key, cache = args.nocache)
 
   fuse = FUSE(DFSFuse(client, args), args.mount, foreground=True)
 
@@ -64,6 +64,13 @@ def main(argv):
     help = 'Debug message',
     action = 'store_true',
     default = False
+  )
+
+  parser.add_argument(
+    '--nocache',
+    help = 'Disable cache',
+    action = 'store_false',
+    default = True
   )
 
   args = parser.parse_args()

@@ -15,12 +15,13 @@ logger = getLogger('Client')
 socket.setdefaulttimeout(5)
 
 class Client():
-  def __init__(self, host = 'localhost', port = 4096, psk = ''):
+  def __init__(self, host = 'localhost', port = 4096, psk = '', cache = True):
     logger.info('Initialize')
     self._host = host
     self._port = port
     self._psk = hashlib.md5(psk.encode('utf-8')).hexdigest()
     self._rlite = Rlite()
+    self._cache = cache
     self._fs = MemoryFS()
     self._connect()
     self._init()
@@ -80,11 +81,12 @@ class Client():
 
     name = os.path.basename(path)
     id = self._fs.getid(parent_path)
+    logger.info('Write to %s, content len %s', path, len(content))
     _, body = self.request('file#put', header = { 'id': id, 'name': name }, body = content)
     if body != 'OK':
       raise ServerError('Write fail')
-    self._fs.loadfile(path, content)
     self._readdir(parent_path)
+    self._fs.loadfile(path, content)
     return True
 
   def read(self, path):
@@ -144,13 +146,14 @@ class Client():
 
   def readdir(self, path):
     cache_key = '{0}:cache'.format(path)
-    if self._rlite.exists(cache_key):
+    if self._cache and self._rlite.exists(cache_key):
       dirents = self._fs.readdir(path)
       logger.info('cached dirents: %s', dirents)
       return dirents
     return self._readdir(path)
 
   def _readdir(self, path):
+    logger.info('_readdir path: %s', path)
     cache_key = '{0}:cache'.format(path)
     id = self._fs.getid(path)
     data = self._readdir_with_id(id)
