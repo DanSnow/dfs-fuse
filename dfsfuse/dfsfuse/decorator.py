@@ -14,7 +14,7 @@ def retryable(func):
     while retry < 3:
       try:
         return func(*args, **kargs)
-      except DisconnectError:
+      except (DisconnectError, ConnectionError):
         logger.error('Connection lost, retry %s', retry)
         args[0]._client.reconnect()
         retry += 1
@@ -27,7 +27,7 @@ def nonretryable(func):
   def _wrapper(*args, **kargs):
     try:
       return func(*args, **kargs)
-    except DisconnectError:
+    except (DisconnectError, ConnectionError):
       logger.error('Connection lost, not retryable, reconnecting...')
       args[0]._client.reconnect()
       raise FuseOSError(errno.EIO)
