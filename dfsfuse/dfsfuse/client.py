@@ -204,7 +204,7 @@ class Client():
     self._init_root()
 
   def _init_root(self):
-    data = self._readdir_with_id()
+    data = self._readdir_with_id(1)
     self._fs.adddir('/', data)
 
   def _send(self, packet):
