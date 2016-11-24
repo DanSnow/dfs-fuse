@@ -1,10 +1,10 @@
 from logging import getLogger
+import sys
 import os
 import collections
 import hashlib
 import socket
 import json
-import pickle
 from hirlite import Rlite
 from .packet import Packet
 from .memoryfs import MemoryFS
@@ -218,7 +218,11 @@ class Client():
   def _connect(self):
     logger.info('Host: %s, Port: %s', self._host, self._port)
     self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self._socket.connect((self._host, self._port))
+    try:
+      self._socket.connect((self._host, self._port))
+    except ConnectionError:
+      logger.error('Connection fail')
+      sys.exit('Connection fail')
 
   def close(self):
     self._socket.close()
