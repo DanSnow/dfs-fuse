@@ -195,7 +195,7 @@ class Client():
     return self._readdir(sock, path)
 
   @inject_socket
-  def rmdir(self, path):
+  def rmdir(self, sock, path):
     id = self._fs.getid(path)
     _, body = self.request(sock, 'dir#rm', header = { 'id': id })
     if body != b'OK':
