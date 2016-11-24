@@ -221,7 +221,6 @@ class Client():
     self._send(sock, packet)
 
   def _init(self):
-    self.login()
     self._fs.reset()
     self._rlite.flushall()
     self._init_root()
