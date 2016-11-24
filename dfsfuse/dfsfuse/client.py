@@ -192,7 +192,7 @@ class Client():
     _, body = self.request(sock, 'dir#add', header = { 'id': parent_id, 'name': name })
     if body != b'OK':
       raise ServerError('Mkdir fail')
-    return self._readdir(path)
+    return self._readdir(sock, path)
 
   @inject_socket
   def rmdir(self, path):
@@ -200,7 +200,7 @@ class Client():
     _, body = self.request(sock, 'dir#rm', header = { 'id': id })
     if body != b'OK':
       raise ServerError('Rmdir fail')
-    self._readdir(path)
+    self._readdir(sock, path)
     return True
 
   def request(self, sock, request, body = b'', header = {}):
