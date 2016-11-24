@@ -155,10 +155,11 @@ class Client():
   def _readdir(self, path):
     logger.info('_readdir path: %s', path)
     cache_key = '{0}:cache'.format(path)
+    self._rlite.expire(cache_key, '0')
     id = self._fs.getid(path)
+    logger.info('_readdir id: %s', id)
     data = self._readdir_with_id(id)
     self._fs.adddir(path, data)
-    self._rlite.set(cache_key, 'cached', 'ex', '20')
     return data.keys()
 
   def _readdir_with_id(self, id = None):
@@ -205,6 +206,7 @@ class Client():
 
   def _init_root(self):
     data = self._readdir_with_id(1)
+    assert data['.']['id'] == 1
     self._fs.adddir('/', data)
 
   def _send(self, packet):
