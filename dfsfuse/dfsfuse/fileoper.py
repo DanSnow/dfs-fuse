@@ -1,13 +1,14 @@
-from io import StringIO
+from io import BytesIO
 
 def read(content, offset, length):
-  return content[offset : offset + length]
+  buf = BytesIO(content)
+  buf.seek(offset)
+  return buf.read(length)
 
 def write(content, data, offset):
-  # FIXME: Maybe should use bytes here
-  buf = StringIO(content)
+  buf = BytesIO(content)
   buf.seek(offset)
-  buf.write(data.decode('utf-8'))
+  buf.write(data)
   return buf.getvalue()
 
 def truncate(content, length):
