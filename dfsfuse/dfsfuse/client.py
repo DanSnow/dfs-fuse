@@ -184,7 +184,7 @@ class Client():
 
   def request(self, request, body = b'', header = {}):
     controller, action = request.split('#')
-    logger.info('Request: action: %s, header: %s, body: %s', action, header, body)
+    logger.info('Request: action: %s, header: %s', action, header)
     _header = { 'controller': controller, 'action': action }
     _header.update(header)
     self._send(Packet(_header, body))
@@ -211,7 +211,7 @@ class Client():
 
   def _send(self, packet):
     data = packet.to_bytes()
-    logger.info('Send: %s', data)
+    logger.info('_send: Send: %s', packet.headers)
     self._socket.sendall(data)
 
   def reconnect(self):
