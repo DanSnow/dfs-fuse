@@ -1,13 +1,21 @@
 import os
+from threading import Lock
+from logging import getLogger
 from .utils.leftpad import leftpad
+
+logger = getLogger('MemoryFS')
 
 class MemoryFS:
   def __init__(self):
+    self._meta_lock = Lock()
     self.reset()
 
   def reset(self):
-    self._meta = {}
-    self._paths = {}
+    with self._meta_lock:
+      logger.info('Enter lock')
+      self._meta = {}
+      self._paths = {}
+      logger.info('Leave lock')
 
   def has(self, path):
     if path in self._meta:
@@ -35,21 +43,31 @@ class MemoryFS:
     return self.has(path) and self._meta[path]['type'] == 'file'
 
   def adddir(self, path, content):
-    self._meta[path] = content['.']
-    self._meta[path]['children'] = set()
+    logger.info('adddir: path: %s, content: %s', path, content)
+    if path == '/':
+      assert content['.']['id'] == 1
+    with self._meta_lock:
+      logger.info('Enter lock')
+      self._meta[path] = content['.']
+      self._meta[path]['children'] = set()
 
-    for name, meta in content.items():
-      if name == '..' or name == '.':
-        continue
-      child_path = os.path.join(path, name)
-      self._paths[child_path] = meta
-      self._meta[path]['children'].add(name)
-      self._meta[child_path] = meta
+      for name, meta in content.items():
+        if name == '..' or name == '.':
+          continue
+        child_path = os.path.join(path, name)
+        self._paths[child_path] = meta
+        self._meta[path]['children'].add(name)
+        self._meta[child_path] = meta
+      logger.info('Leave lock')
+    assert self._meta['/']['id'] == 1
 
   def loadfile(self, path, content):
     if not self.isfile(path):
       raise TypeError('Path is not file')
-    self._meta[path]['content'] = content
+    with self._meta_lock:
+      logger.info('Enter lock')
+      self._meta[path]['content'] = content
+      logger.info('Leave lock')
 
   def getid(self, path):
     return self._meta[path]['id']
