@@ -9,6 +9,7 @@ from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
 from .fileoper import read, write, truncate
 from .decorator import catch_client_exceptions, retryable, nonretryable
+from io import BytesIO
 
 logger = getLogger('DFSFuse')
 
@@ -17,6 +18,7 @@ class DFSFuse(LoggingMixIn, Operations):
   def __init__(self, client, config):
     self._client = client
     self._config = config
+    self._fhs = []
 
   @retryable
   def access(self, path, mode):
@@ -141,21 +143,35 @@ class DFSFuse(LoggingMixIn, Operations):
         raise FuseOSError(errno.ENOENT)
       if not (flags & os.O_APPEND):
         self._client.write(path, '')
-    return 0
+    l = len(self._fhs)
+    self._fhs.append({'io': BytesIO(self._client.read(path)), 'dirty': False})
+    logger.debug('open file return: %s', l)
+    return l
 
   def create(self, path, mode, fi=None):
     self._client.write(path, '')
-    return 0
+    l = len(self._fhs)
+    self._fhs.append({'io': BytesIO(), 'dirty': False})
+    return l
 
   @retryable
   def read(self, path, length, offset, fh):
-    return read(self._client.read(path), offset, length)
+    self._fhs[fh]['io'].seek(offset)
+    return self._fhs[fh]['io'].read(length)
 
   @retryable
   def write(self, path, buf, offset, fh):
-    new_content = write(self._client.read(path), buf, offset)
-    self._client.write(path, new_content)
-    return len(buf)
+    self._fhs[fh]['dirty'] = True
+    self._fhs[fh]['io'].seek(offset)
+    return self._fhs[fh]['io'].write(buf)
+
+  @nonretryable
+  def release(self, path, fh):
+    if self._fhs[fh]['dirty']:
+      self._fhs[fh]['io'].seek(0)
+      self._client.write(path, self._fhs[fh]['io'].read())
+    self._fhs[fh]['io'].close()
+    return 0
 
   @retryable
   def truncate(self, path, length, fh=None):

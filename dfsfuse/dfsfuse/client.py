@@ -138,9 +138,9 @@ class Client():
       raise RuntimeError('target {0} not exist'.format(head))
     parent_id = self._fs.getid(head)
     if meta['type'] == 'file':
-      return self._mvfile(id, sock, parent_id, tail)
+      return self._mvfile(sock, id, parent_id, tail)
     else:
-      return self._mvdir(id, sock, parent_id, tail)
+      return self._mvdir(sock, id, parent_id, tail)
 
   def _mvfile(self, sock, id, parent_id, name):
     _, body = self.request(sock, 'file#mvfile', header = {
@@ -192,15 +192,15 @@ class Client():
     _, body = self.request(sock, 'dir#add', header = { 'id': parent_id, 'name': name })
     if body != b'OK':
       raise ServerError('Mkdir fail')
-    return self._readdir(path)
+    return self._readdir(sock, path)
 
   @inject_socket
-  def rmdir(self, path):
+  def rmdir(self, sock, path):
     id = self._fs.getid(path)
     _, body = self.request(sock, 'dir#rm', header = { 'id': id })
     if body != b'OK':
       raise ServerError('Rmdir fail')
-    self._readdir(path)
+    self._readdir(sock, path)
     return True
 
   def request(self, sock, request, body = b'', header = {}):
