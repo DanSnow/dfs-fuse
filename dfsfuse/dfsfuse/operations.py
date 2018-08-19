@@ -7,7 +7,7 @@ from stat import S_IFDIR, S_IFREG
 from dateutil import parser as dateparser
 from logging import getLogger
 from fuse import Operations, LoggingMixIn, FuseOSError
-from .fileoper import read, write, truncate
+from .fileoper import truncate
 from .decorator import catch_client_exceptions, retryable, nonretryable
 from io import BytesIO
 
@@ -136,16 +136,16 @@ class DFSFuse(LoggingMixIn, Operations):
                 raise FuseOSError(errno.ENOENT)
             if not (flags & os.O_APPEND):
                 self._client.write(path, "")
-        l = len(self._fhs)
+        length = len(self._fhs)
         self._fhs.append({"io": BytesIO(self._client.read(path)), "dirty": False})
-        logger.debug("open file return: %s", l)
-        return l
+        logger.debug("open file return: %s", length)
+        return length
 
     def create(self, path, mode, fi=None):
         self._client.write(path, "")
-        l = len(self._fhs)
+        length = len(self._fhs)
         self._fhs.append({"io": BytesIO(), "dirty": False})
-        return l
+        return length
 
     @retryable
     def read(self, path, length, offset, fh):

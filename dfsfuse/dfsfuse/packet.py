@@ -3,7 +3,6 @@
 
 from io import BytesIO
 from logging import getLogger
-import select
 
 logger = getLogger("Packet")
 
@@ -55,20 +54,20 @@ class Packet:
         return s
 
     def check(self):
-        l = int(self.get("content-length"))
-        if l == None:
+        length = int(self.get("content-length"))
+        if length is None:
             logger.error("Check fail: format error")
             return None
-        if l == len(self.get()):
+        if length == len(self.get()):
             return True
         return False
 
     def _set_body(self, buf):
-        l = int(self.get("content-length"))
+        length = int(self.get("content-length"))
         self._body = self._body + buf
         content = self._body
-        if len(content) > l:
-            self._body = content[0:l]
+        if len(content) > length:
+            self._body = content[0:length]
 
     @staticmethod
     def parse(pkt, x):
