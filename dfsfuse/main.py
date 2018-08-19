@@ -12,20 +12,19 @@ def run_fuse(args):
         getLogger("Packet").setLevel(WARNING)
     client = Client(host=args.host, port=args.port, psk=args.key, cache=args.nocache)
 
-    fuse = FUSE(DFSFuse(client, args), args.mount, foreground=True)
+    FUSE(DFSFuse(client, args), args.mount, foreground=True)
 
 
 def main(argv):
-    logger = getLogger("main")
     parser = argparse.ArgumentParser()
     parser.add_argument("mount", help="Mount point", type=str)
     parser.add_argument("-k", "--key", help="PSK key", default="", type=str)
     parser.add_argument("--host", help="Host", default="localhost", type=str)
     parser.add_argument("-p", "--port", help="Port", default=4096, type=int)
 
-    parser.add_argument("-u", "--uid", help="Uid", default=os.getuid(), type=int)
+    parser.add_argument("-u", "--uid", help="uid", default=os.getuid(), type=int)
 
-    parser.add_argument("-g", "--gid", help="Gid", default=os.getgid(), type=int)
+    parser.add_argument("-g", "--gid", help="gid", default=os.getgid(), type=int)
 
     parser.add_argument(
         "-d", "--debug", help="Debug message", action="store_true", default=False

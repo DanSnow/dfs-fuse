@@ -59,11 +59,11 @@ def _catch_exceptions(func):
     return _wrapper
 
 
-def catch_client_exceptions(klass):
-    for attr_name in klass.__dict__:
+def catch_client_exceptions(cls):
+    for attr_name in cls.__dict__:
         if attr_name.startswith("_"):
             continue
-        attr = getattr(klass, attr_name)
+        attr = getattr(cls, attr_name)
         if isinstance(attr, FunctionType):
-            setattr(klass, attr_name, _catch_exceptions(attr))
-    return klass
+            setattr(cls, attr_name, _catch_exceptions(attr))
+    return cls

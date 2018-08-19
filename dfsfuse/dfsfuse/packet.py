@@ -25,10 +25,7 @@ class Packet:
     def get(self, header=None):
         if header is None:
             return self._body
-        elif header in self.header:
-            return self.header[header]
-        else:
-            return None
+        return self.header.get(header, None)
 
     @property
     def headers(self):
@@ -70,8 +67,8 @@ class Packet:
             self._body = content[0:length]
 
     @staticmethod
-    def parse(pkt, x):
-        buf = BytesIO(x)
+    def parse(pkt, raw):
+        buf = BytesIO(raw)
 
         logger.info("Start parse")
         if pkt is None:

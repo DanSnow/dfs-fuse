@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 from threading import Lock
 from logging import getLogger
 from .utils.leftpad import leftpad
@@ -12,11 +13,9 @@ class MemoryFS:
         self.reset()
 
     def reset(self):
-        with self._meta_lock:
-            logger.info("Enter lock")
+        with self._lock_with_log:
             self._meta = {}
             self._paths = {}
-            logger.info("Leave lock")
 
     def has(self, path):
         if path in self._meta:
@@ -47,8 +46,7 @@ class MemoryFS:
         logger.info("adddir: path: %s, content: %s", path, content)
         if path == "/":
             assert content["."]["id"] == 1
-        with self._meta_lock:
-            logger.info("Enter lock")
+        with self._lock_with_log:
             self._meta[path] = content["."]
             self._meta[path]["children"] = set()
 
@@ -59,16 +57,13 @@ class MemoryFS:
                 self._paths[child_path] = meta
                 self._meta[path]["children"].add(name)
                 self._meta[child_path] = meta
-            logger.info("Leave lock")
         assert self._meta["/"]["id"] == 1
 
     def loadfile(self, path, content):
         if not self.isfile(path):
             raise TypeError("Path is not file")
-        with self._meta_lock:
-            logger.info("Enter lock")
+        with self._lock_with_log:
             self._meta[path]["content"] = content
-            logger.info("Leave lock")
 
     def getid(self, path):
         return self._meta[path]["id"]
@@ -85,3 +80,10 @@ class MemoryFS:
         if content is None:
             raise RuntimeError("Content not loaded")
         return content
+
+    @contextmanager
+    def _lock_with_log(self):
+        with self._meta_lock:
+            logger.info("Enter lock")
+            yield
+            logger.info("Leave lock")
