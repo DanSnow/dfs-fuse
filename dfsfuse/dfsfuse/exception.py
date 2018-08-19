@@ -1,18 +1,22 @@
 class DFSError(RuntimeError):
-  pass
+    pass
+
 
 class TimeoutError(DFSError):
-  pass
+    pass
+
 
 class ServerError(DFSError):
-  pass
+    pass
+
 
 class InternalError(DFSError):
-  pass
+    pass
+
 
 class DisconnectError(DFSError):
-  pass
+    pass
+
 
 class AuthError(DFSError):
-  pass
-
+    pass

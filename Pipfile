@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fusepy = "==2.0.4"
+hirlite = "==0.2.0"
+python-dateutil = "==2.6.0"
+
+[dev-packages]
+neovim = "*"
+
+[requires]
+python_version = "3.6"

@@ -1,4 +1,0 @@
-fusepy==2.0.4
-hirlite==0.2.0
-ipython==5.1.0
-python-dateutil==2.6.0

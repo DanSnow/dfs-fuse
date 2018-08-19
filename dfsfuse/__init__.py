@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-from . import bootstrap
-from .dfsfuse.operations import DFSFuse
-from .dfsfuse.client import Client
-from .dfsfuse.memoryfs import MemoryFS
-from .main import main
+import logging
+from logging import DEBUG, getLogger
+
+FORMAT = "%(levelname)s %(asctime)-15s %(name)s: %(message)s"
+logging.basicConfig(format=FORMAT, level=DEBUG)
+
+logger = getLogger("bootstrap")
+logger.info("start")

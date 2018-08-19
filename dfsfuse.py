@@ -5,5 +5,4 @@ from sys import argv
 from dfsfuse import main
 
 if __name__ == '__main__':
-  main(argv)
-
+    main(argv)
